@@ -13,27 +13,52 @@ namespace TheGame.Repository
             _context = context;
         }
 
-        public async Task<IEnumerable<ComplatedGame>> GetLiderboardAsync()
+    
+
+        public async Task<List<UserStats>> GetLeaderboardWithGameCount(int minGamesPlayed)
         {
-            return await _context.ComplatedGames.Include(m => m.User).ToListAsync();
+            var users = await _context.Users.ToListAsync();
+
+            var userStats = users
+                .Select(u => new UserStats
+                {
+                    User = u,
+                    GamesPlayed = _context.ComplatedGames.Count(g => g.UserId == u.Id),
+                    GamesWon = _context.ComplatedGames.Count(g => g.UserId == u.Id && g.Win),
+                    TotalTries = _context.ComplatedGames.Where(g => g.UserId == u.Id).Sum(g => g.Tries)
+                })
+                .Where(us => us.GamesPlayed >= minGamesPlayed)
+                .ToList();  // Perform calculations in memory
+
+            var sortedUserStats = userStats
+                .OrderByDescending(us => us.SuccessRate)
+                .ThenBy(us => us.TotalTries)
+                .ToList();
+
+            return sortedUserStats;
         }
 
-        public async Task<IEnumerable<ComplatedGame>> GetLiderboardSortedByWinEffortAsync()
+        public async Task<List<UserStats>> GetLeaderboard()
         {
-            var completedGames = await GetLiderboardAsync();
-            completedGames = completedGames.OrderBy(g => g.Tries)
-                                           .ThenBy(g => g.Win);
-                                        
-            return completedGames;
-        }     
+            var users = await _context.Users.ToListAsync();
 
-        public async Task<IEnumerable<ComplatedGame>> GetLiderboardSortedByAbundanceOfNumbersAsync()
-        {
-            var completedGames = await GetLiderboardAsync();          
-            completedGames = completedGames.OrderByDescending(g => g.P)
-                                            .ThenBy(g => g.Tries)
-                                           .ThenByDescending(g => g.M);
-            return completedGames;
+            var userStats = users
+                .Select(u => new UserStats
+                {
+                    User = u,
+                    GamesPlayed = _context.ComplatedGames.Count(g => g.UserId == u.Id),
+                    GamesWon = _context.ComplatedGames.Count(g => g.UserId == u.Id && g.Win),
+                    TotalTries = _context.ComplatedGames.Where(g => g.UserId == u.Id).Sum(g => g.Tries)
+                })             
+                .ToList();  // Perform calculations in memory
+
+            var sortedUserStats = userStats
+                .OrderByDescending(us => us.SuccessRate)
+                .ThenBy(us => us.TotalTries)
+                .ToList();
+
+            return sortedUserStats;
         }
+
     }
 }

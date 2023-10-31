@@ -35,31 +35,41 @@ namespace TheGame.Services
             return string.Concat(digits);
         }
 
-        public ProgresGame AddOrUpdateGames(ProgresGame progresGame, ResponseModel response)
+        public ProgresGame CalculateAndCreateGames(ProgresGame progresGame,  ResponseModel response)
         {
+    
+            progresGame.ClientNumber = response.clientNumber;
+            var chekNumbers =  CheckClientNumbers(progresGame);
+            progresGame.P = chekNumbers.P;
+            progresGame.M = chekNumbers.M;
+            progresGame.UserId = response.UserId;
             progresGame.GameId = response.GameId;
-            progresGame.Tries = 1;
-            progresGame.Id = Guid.NewGuid();          
+            progresGame.Tries++;
+            if (progresGame.Id != null)
+            {
+                     progresGame.Id = Guid.NewGuid();
+            }
             return progresGame;
 
 
         }
-        
-        public ProgresGame CreateResponse(ProgresGame gameRes)
+
+ 
+        public ProgresGame CreateResponse(ProgresGame progresGame)
         {
-            if (gameRes.P == 4)
+            if (progresGame.P == 4)
             {
-                gameRes.Message = "Great You won this game";
-                gameRes.Win = true;
-                return gameRes;
+                progresGame.Message = "Great You won this game";
+                progresGame.Win = true;
+                return progresGame;
             }
-            else if (gameRes.Tries  == 8)
+            else if (progresGame.Tries  == 8)
             {                
-                gameRes.Message = $"Sorry, You missed it! Game Lost. Correct with place {gameRes.P} and Correct without place {gameRes.M}.Try play new game";
-                return gameRes;
+                progresGame.Message = $"Sorry, You missed it! Game Lost. Correct with place {progresGame.P} and Correct without place {progresGame.M}.Try play new game";
+                return progresGame;
             }
-            gameRes.Message = $"Sorry, You missed it! Try again . Correct with place {gameRes.P} and Correct without place {gameRes.M} . Your tried {gameRes.Tries} times";
-            return gameRes;
+            progresGame.Message = $"Sorry, You missed it! Try again . Correct with place {progresGame.P} and Correct without place {progresGame.M} . Your tried {progresGame.Tries} times";
+            return progresGame;
         }
 
         public ComplatedGame GeneradeComplateGame(ProgresGame progresGame)

@@ -14,13 +14,27 @@ namespace TheGame.Controllers
         {
             _repository = repository;
         }
+  
+        [HttpGet("{minGamesPlayed}")]
+        public async Task<IActionResult> GetLiderboardWithGameCount(int minGamesPlayed)
+        {
+            try
+            {
+                var data = await _repository.GetLeaderboardWithGameCount(minGamesPlayed);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
-        [HttpGet("all")]
-        public async Task<IActionResult> GetAllComplatedGames()
+        [HttpGet]
+        public async Task<IActionResult> GetLeaderboard()
         {
             try
             {
-                var data = await _repository.GetLiderboardAsync();
+                var data = await _repository.GetLeaderboard();
                 return Ok(data);
             }
             catch (Exception ex)
@@ -28,33 +42,8 @@ namespace TheGame.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpGet("win")]
-        public async Task<IActionResult> GetAllComplatedGamesSortedByWinEffortAsync()
-        {
-            try
-            {
-                var data = await _repository.GetLiderboardSortedByWinEffortAsync();
-                return Ok(data);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-       
 
-        [HttpGet("num")]
-        public async Task<IActionResult> GetAllComplatedGamesSortedByAbundanceOfNumbersAsync()
-        {
-            try
-            {
-                var data = await _repository.GetLiderboardSortedByAbundanceOfNumbersAsync();
-                return Ok(data);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+
+
     }
 }

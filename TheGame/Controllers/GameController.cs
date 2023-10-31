@@ -9,7 +9,6 @@ namespace TheGame.Controllers
     public class GameController : ControllerBase
     {
         private readonly GameRepository _repository;
-        Result result = new Result();
         public GameController(GameRepository repository)
         {
            _repository = repository;
@@ -32,8 +31,7 @@ namespace TheGame.Controllers
             }
             catch(Exception ex) { 
                 return BadRequest(ex.Message);
-              }
-           
+              }           
         }
 
     

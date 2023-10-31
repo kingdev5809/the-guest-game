@@ -12,6 +12,7 @@ namespace TheGame.Data
         public DbSet<ComplatedGame> ComplatedGames { get; set; }
         public DbSet<ProgresGame> ProgresGames { get; set; }
         public DbSet<RandomNumber> RandomNumbers { get; set; }
+        public DbSet<TryHistory> TryHistories { get; set; }
     }
 
 }
