@@ -1,15 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
 using Microsoft.EntityFrameworkCore;
-using System.Numerics;
 using TheGame.Data;
-using TheGame.Interface;
 using TheGame.Models;
 using TheGame.Services;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+
 
 namespace TheGame.Repository
 {
-    public class GameRepository 
+    public class GameRepository
     {
 
         CheckGameViewModel checkGameViewModel = new CheckGameViewModel();
@@ -20,12 +18,12 @@ namespace TheGame.Repository
         {
             _context = context;
             _gameService = gameService;
-        }    
+        }
 
 
         public RandomNumber StartGame()
         {
-           var randomNumber= _gameService.GenerateUniqueRandomNumbers();
+            var randomNumber = _gameService.GenerateUniqueRandomNumbers();
             RandomNumber numbers = new RandomNumber();
             numbers.Number = randomNumber.ToString();
             numbers.GameId = Guid.NewGuid();
@@ -33,7 +31,7 @@ namespace TheGame.Repository
             _context.SaveChanges();
             return numbers;
         }
-   
+
         public async Task<CheckGameViewModel> CheckGame(ResponseModel response)
         {
 
@@ -76,6 +74,7 @@ namespace TheGame.Repository
 
                 UpdateExistingGame(existedGame, progresGame);
             }
+             CreateHistory(progresGame);
             await _context.SaveChangesAsync();
             // Create response message for client side
             ProgresGame createResponse = _gameService.CreateResponse(progresGame);
@@ -84,11 +83,14 @@ namespace TheGame.Repository
             var tryHistory = await _context.TryHistories
                  .Where(h => h.GameId == response.GameId)
                 .ToListAsync();
+
+
+
             // Complate game. If tries = 8 or client win the game. Game is Complated and add the database
-            if (createResponse.Win  == true  ||   createResponse.Tries == 8 )
+            if (createResponse.Win == true || createResponse.Tries == 8)
             {
                 ComplatedGame complatedGame = _gameService.GeneradeComplateGame(createResponse);
-                 _context.ComplatedGames.Add(complatedGame);
+                _context.ComplatedGames.Add(complatedGame);
             }
             _context.SaveChanges();
             checkGameViewModel.LastGame = createResponse;
@@ -105,15 +107,7 @@ namespace TheGame.Repository
         private void UpdateExistingGame(ProgresGame existedGame, ProgresGame progresGame)
         {
             existedGame.ClientNumber = progresGame.ClientNumber;
-            var tryHistory = new TryHistory
-            {
-                GameId = progresGame.GameId,
-                TryNumber = existedGame.Tries,
-                ClientNum = progresGame.ClientNumber,
-                M= progresGame.M,
-                P= progresGame.P,
-            };
-            _context.TryHistories.Add(tryHistory);
+         
             existedGame.M = progresGame.M;
             existedGame.P = progresGame.P;
             existedGame.RandomNumber = progresGame.RandomNumber;
@@ -122,9 +116,19 @@ namespace TheGame.Repository
             _context.ProgresGames.Update(existedGame);
         }
 
-
+        private void CreateHistory( ProgresGame progresGame)
+        {
+            var tryHistory = new TryHistory
+            {
+                GameId = progresGame.GameId,
+                TryNumber = progresGame.Tries,
+                ClientNum = progresGame.ClientNumber,
+                M = progresGame.M,
+                P = progresGame.P,
+            };
+            _context.TryHistories.Add(tryHistory);
+        }
 
     }
 }
-
 

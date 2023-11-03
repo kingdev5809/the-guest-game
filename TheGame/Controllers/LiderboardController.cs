@@ -42,8 +42,5 @@ namespace TheGame.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-
-
     }
 }
