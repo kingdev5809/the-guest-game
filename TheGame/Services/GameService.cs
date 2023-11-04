@@ -10,7 +10,7 @@ namespace TheGame.Services
     public class GameService
     {
        
-        public ProgresGame CheckClientNumbers(ProgresGame progresGame)
+        public ProgresGame CalculateClientNumbers(ProgresGame progresGame)
         {
             char[] arrayRandomNumber = progresGame.RandomNumber.ToCharArray();
             char[] arrayClientNumber = progresGame.ClientNumber.ToCharArray();           
@@ -35,24 +35,7 @@ namespace TheGame.Services
             return string.Concat(digits);
         }
 
-        public ProgresGame CalculateAndCreateGames(ProgresGame progresGame,  ResponseModel response)
-        {
-    
-            progresGame.ClientNumber = response.clientNumber;
-            var chekNumbers =  CheckClientNumbers(progresGame);
-            progresGame.P = chekNumbers.P;
-            progresGame.M = chekNumbers.M;
-            progresGame.UserId = response.UserId;
-            progresGame.GameId = response.GameId;
-            progresGame.Tries++;
-            if (progresGame.Id != null)
-            {
-                     progresGame.Id = Guid.NewGuid();
-            }
-            return progresGame;
-
-
-        }
+  
 
  
         public ProgresGame CreateResponse(ProgresGame progresGame)
@@ -72,17 +55,7 @@ namespace TheGame.Services
             return progresGame;
         }
 
-        public ComplatedGame GeneradeComplateGame(ProgresGame progresGame)
-        {
-            ComplatedGame complatedGame = new ComplatedGame();
-            complatedGame.Tries = progresGame.Tries;
-            complatedGame.M = progresGame.M;
-            complatedGame.P = progresGame.P;
-            complatedGame.UserId = progresGame.UserId;
-            complatedGame.GameId = progresGame.GameId;
-            complatedGame.Win = progresGame.Win;
-            return complatedGame;
-        }
+      
 
         public async Task<string> ValidateNumber(string clientNumber)
         {

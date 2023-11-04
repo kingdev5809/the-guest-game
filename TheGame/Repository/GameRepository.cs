@@ -34,6 +34,7 @@ namespace TheGame.Repository
 
         public async Task<CheckGameViewModel> CheckGame(ResponseModel response)
         {
+            var progresGame = new ProgresGame();
 
             // Validate the client number
             var validationResult = await _gameService.ValidateNumber(response.clientNumber);
@@ -41,7 +42,15 @@ namespace TheGame.Repository
             {
                 throw new Exception(validationResult);
             }
-            var progresGame = new ProgresGame();
+
+
+            // Get the existing game record, if any
+            var existedGame = await _context.ProgresGames.FirstOrDefaultAsync(n => n.GameId == response.GameId);
+
+            if (existedGame != null && (existedGame.Win || existedGame.Tries == 8))
+            {
+                throw new Exception("The Game Already Complated. Start Another Game");
+            }
 
 
             // Get the random number for the game
@@ -52,69 +61,69 @@ namespace TheGame.Repository
                 throw new Exception("The Game not found. Start Another Game");
             }
             progresGame.RandomNumber = randomNumber.Number;
+            progresGame.ClientNumber = response.clientNumber;
 
-            // Get the existing game record, if any
-            var existedGame = await _context.ProgresGames.FirstOrDefaultAsync(n => n.GameId == response.GameId);
+     
+         
 
-
-            if (existedGame != null && (existedGame.Win || existedGame.Tries == 8))
-            {
-                throw new Exception("The Game Already Complated. Start Another Game");
-            }
 
             //  Calculate the results of the game and  Add  the game record
-            progresGame = _gameService.CalculateAndCreateGames(progresGame, response);
+             _gameService.CalculateClientNumbers(progresGame);
 
-            if (existedGame == null)
-            {
-                AddNewGame(progresGame);
-            }
-            else
-            {
+            // maping all values and add or update
+             AddOrUpdateGame(existedGame , progresGame, response);
 
-                UpdateExistingGame(existedGame, progresGame);
-            }
+            // Create history
              CreateHistory(progresGame);
-            await _context.SaveChangesAsync();
+
+
+
             // Create response message for client side
-            ProgresGame createResponse = _gameService.CreateResponse(progresGame);
+            _gameService.CreateResponse(progresGame);
+            await _context.SaveChangesAsync();
 
-            // get all tries the game
+            // get all history  this game
             var tryHistory = await _context.TryHistories
-                 .Where(h => h.GameId == response.GameId)
-                .ToListAsync();
-
+                   .Where(h => h.GameId == response.GameId)
+                  .ToListAsync();
 
 
             // Complate game. If tries = 8 or client win the game. Game is Complated and add the database
-            if (createResponse.Win == true || createResponse.Tries == 8)
+            if (progresGame.Win == true || progresGame.Tries == 8)
             {
-                ComplatedGame complatedGame = _gameService.GeneradeComplateGame(createResponse);
-                _context.ComplatedGames.Add(complatedGame);
+                GeneradeComplateGame(progresGame);               
             }
-            _context.SaveChanges();
-            checkGameViewModel.LastGame = createResponse;
+
+            await _context.SaveChangesAsync();
+            checkGameViewModel.LastGame = progresGame;
             checkGameViewModel.Histories = tryHistory;
             return checkGameViewModel;
         }
 
 
-        private void AddNewGame(ProgresGame progresGame)
-        {
-            _context.ProgresGames.Add(progresGame);
-        }
 
-        private void UpdateExistingGame(ProgresGame existedGame, ProgresGame progresGame)
-        {
-            existedGame.ClientNumber = progresGame.ClientNumber;
-         
-            existedGame.M = progresGame.M;
-            existedGame.P = progresGame.P;
-            existedGame.RandomNumber = progresGame.RandomNumber;
+
+
+
+        private async void AddOrUpdateGame(ProgresGame existedGame, ProgresGame progresGame, ResponseModel response)
+        {            
+                progresGame.UserId = response.UserId;
+                progresGame.GameId = response.GameId;
+                progresGame.Tries++;           
+                
+            if (existedGame == null)
+            {
+                progresGame.Id = Guid.NewGuid();
+                _context.ProgresGames.Add(progresGame);
+                return;
+            }
             existedGame.Tries++;
             progresGame.Tries = existedGame.Tries;
+            existedGame.Win = progresGame.Win;
             _context.ProgresGames.Update(existedGame);
         }
+
+   
 
         private void CreateHistory( ProgresGame progresGame)
         {
@@ -127,8 +136,20 @@ namespace TheGame.Repository
                 P = progresGame.P,
             };
             _context.TryHistories.Add(tryHistory);
+            return;
         }
 
+        private void GeneradeComplateGame(ProgresGame progresGame)
+        {
+            ComplatedGame complatedGame = new ComplatedGame();
+            complatedGame.Tries = progresGame.Tries;
+            complatedGame.M = progresGame.M;
+            complatedGame.P = progresGame.P;
+            complatedGame.UserId = progresGame.UserId;
+            complatedGame.GameId = progresGame.GameId;
+            complatedGame.Win = progresGame.Win;
+            _context.ComplatedGames.Add(complatedGame);
+        }
     }
 }
 
